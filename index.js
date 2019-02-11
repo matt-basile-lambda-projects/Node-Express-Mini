@@ -16,10 +16,14 @@ server.get('/', (req, res) => {
 });
 
 server.get('/users', (req, res) => {
-const userData = users.find()
-  // express will pass the request and response objects to this function
-  // the .send() on the response object can be used to send a response to the client
-  res.status(200).json(userData);
+  users
+  .find()
+  .then(users => {
+    res.status(200).json({success: true, users})
+  })
+  .catch(({code, message}) =>{
+    res.status(code).json({success: false, message})
+})
 });
 
 // once the server is fully configured we can have it "listen" for connections on a particular "port"
