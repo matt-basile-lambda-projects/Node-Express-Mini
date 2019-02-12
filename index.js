@@ -1,13 +1,14 @@
 
 // require the express npm module, needs to be added to the project using "yarn add" or "npm install"
 const express = require('express');
+const cors = require('cors');
 const users = require('./data/db.js')
 
 const server = express();
+server.use(cors())
 server.use(express.json());
 
 // creates an express application using the express module
-
 //Console.log on Home route
 server.get('/', (req, res) => {
   // express will pass the request and response objects to this function
@@ -84,30 +85,59 @@ server.delete('/api/users/:id', (req, res) => {
   })
 });
 //Edit USER -- PUT 
-server.put('/api/users/:id', (req,res)=>{
-  const {id} = req.params;
-  const changes = req.body;
-  const { name, bio } = req.body;
-  if (!name && !bio) {
-    return res
-      .status(400)
-      .json({ errorMessage: "Please provide name and bio for the user." });
-  }
-  users.update(id, changes)
-  .then(updated =>{
-      if(updated) {
-        res.status(200).json({success: true, updated});
-      } else{
-        res.status(404).json({success:false, message: 'The user with the specified ID does not exist.'});
+// server.put('/api/users/:id', (req,res)=>{
+//   const {id} = req.params;
+//   const changes = req.body;
+//   const { name, bio } = req.body;
+//   if (!name && !bio) {
+//     return res
+//       .status(400)
+//       .json({ errorMessage: "Please provide name and bio for the user." });
+//   }
+//   users.update(id, changes)
+//   .then(updated =>{
+//       if(updated) {
+//         res.status(200).json({success: true, updated});
+//       } else{
+//         res.status(404).json({success:false, message: 'The user with the specified ID does not exist.'});
+//       }
+//   })
+  
+//   .catch(({code, message}) =>{
+//       res.status(500).json({success: false, error:"The user information could not be modified"})
+//   })
+// })
+
+server.put("/api/users/:id", (req, res) => {
+  const { id } = req.params;
+  const { name, bio } = req.body
+  console.log(req.body) //{ name: 'Exzc', bio: 'ent at Lambda School' }
+  if (!name || !bio) {
+    sendError(400, "Must provide name and bio", res);
+    return;
+}
+  users.update(id, { name, bio })
+    .then(response => {
+      if(response == 0) {
+          sendError(404, `User with that id could not found`, res);
+          return;
       }
-  })
-  .catch(({code, message}) =>{
-      res.status(500).json({success: false, error:"The user information could not be modified"})
-  })
-})
+      users.findById(id)
+        .then(user=> {
+            console.log(user)
+            if(user.length === 0) {
+                sendError(404, 'User with that id not found', res);
+                return;
+            }
+            res.json({ user });
+        })
 
-
-
+    })
+    .catch(message => {
+       sendError(400, message, res);
+       return;
+    });
+});
 
 
 
